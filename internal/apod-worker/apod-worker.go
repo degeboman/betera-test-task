@@ -2,19 +2,20 @@ package apod_worker
 
 import (
 	"github.com/degeboman/betera-test-task/constant"
-	"github.com/degeboman/betera-test-task/constant/apod"
-	apodclient "github.com/degeboman/betera-test-task/internal/apod-client"
 	"github.com/degeboman/betera-test-task/internal/logger/sl"
-	"github.com/degeboman/betera-test-task/internal/models"
 	"github.com/degeboman/betera-test-task/internal/storage"
+	"github.com/degeboman/betera-test-task/internal/usecase"
 	"log/slog"
 	"time"
 )
 
+type ApodStorageProvider interface {
+	storage.ApodStorage
+}
+
 type ApodWorker struct {
 	*slog.Logger
-	*apodclient.ApodClient
-	ApodStorage storage.ApodStorage
+	usecase.Usecase
 }
 
 func (aw ApodWorker) Ticker(stop chan bool) {
@@ -29,11 +30,11 @@ func (aw ApodWorker) Ticker(stop chan bool) {
 	now := nowInApodFormat()
 
 	// checking that there is today's apod recording
-	_, err := aw.ApodStorage.ByDate(now)
+	_, err := aw.ApodUsecase.GetByDate(now)
 	if err != nil {
 		if err.Error() == constant.ErrRecordNotFound {
 			// today record not found
-			aw.getApodAndSave(now)
+			aw.getApodAndSave(nowInApodFormat())
 		} else {
 			log.Error("failed to get apod meta by date", sl.Err(err))
 		}
@@ -55,11 +56,10 @@ func nowInApodFormat() string {
 	return time.Now().Format("2006-01-02")
 }
 
-func New(logger *slog.Logger, ac *apodclient.ApodClient, as storage.ApodStorageImpl) ApodWorker {
+func New(logger *slog.Logger, usecase usecase.Usecase) ApodWorker {
 	return ApodWorker{
-		Logger:      logger,
-		ApodClient:  ac,
-		ApodStorage: as,
+		Logger:  logger,
+		Usecase: usecase,
 	}
 }
 
@@ -70,39 +70,52 @@ func (aw ApodWorker) getApodAndSave(date string) {
 		slog.String("op", op),
 	)
 
-	apodResponse, err := aw.ApodClient.ByDate(date)
+	// get apod meta by date
+	apodCore, err := aw.ApodUsecase.UploadByDate(date)
 	if err != nil {
 		log.Error("failed to get apod meta", sl.Err(err))
 	}
 
 	// cannot save video apod
-	if apodResponse.MediaType == apod.VideoMediaType {
+	if apodCore.MediaType == constant.VideoMediaType {
 		return
 	}
 
-	var apodGorm models.ApodGorm
-	apodGorm.FromResponse(apodResponse)
+	// download image by url and save in s3 storage
 
-	// download image from url and save in s3 storage
-	imageName, err := aw.ApodClient.DownloadImage(apodGorm.Url)
+	imageUnit, err := aw.ImageUsecase.DownloadFromUrl(apodCore.Url)
 	if err != nil {
 		log.Error("failed to download apod image", sl.Err(err))
 
 		return
 	}
 
-	hdImageName, err := aw.ApodClient.DownloadImage(apodGorm.HDUrl)
+	imageName, err := aw.ImageUsecase.SaveImage(imageUnit)
+	if err != nil {
+		log.Error("failed to save apod image", sl.Err(err))
+
+		return
+	}
+
+	imageHdUnit, err := aw.ImageUsecase.DownloadFromUrl(apodCore.HDUrl)
 	if err != nil {
 		log.Error("failed to download apod image", sl.Err(err))
 
 		return
 	}
 
-	apodGorm.ImageName = imageName
-	apodGorm.HDImageName = hdImageName
+	hdImageName, err := aw.ImageUsecase.SaveImage(imageHdUnit)
+	if err != nil {
+		log.Error("failed to save apod image", sl.Err(err))
+
+		return
+	}
+
+	apodCore.ImageName = imageName
+	apodCore.HDImageName = hdImageName
 
 	//save apod model in db
-	if err := aw.ApodStorage.Create(apodGorm); err != nil {
+	if err := aw.ApodUsecase.Create(apodCore); err != nil {
 		log.Error("failed to create apod model", sl.Err(err))
 	}
 }

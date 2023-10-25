@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/degeboman/betera-test-task/constant/env"
+	"github.com/degeboman/betera-test-task/constant"
 	"github.com/degeboman/betera-test-task/internal/config"
 	"github.com/degeboman/betera-test-task/internal/logger/slogpretty"
 	"log/slog"
@@ -12,13 +12,13 @@ func SetupLogger(cfg config.Config) *slog.Logger {
 	var log *slog.Logger
 
 	switch cfg.Env {
-	case env.Local.String():
+	case constant.Local.String():
 		log = setupPrettySlog()
-	case env.Development.String():
+	case constant.Development.String():
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		)
-	case env.Production.String():
+	case constant.Production.String():
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
 		)

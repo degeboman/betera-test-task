@@ -1,18 +1,20 @@
 package gateway
 
 import (
+	s3storage "github.com/degeboman/betera-test-task/internal/s3-storage"
+	minioclient "github.com/degeboman/betera-test-task/internal/s3-storage/minio-client"
 	"github.com/degeboman/betera-test-task/internal/storage"
 	postgresclient "github.com/degeboman/betera-test-task/internal/storage/postgres-client"
-	"go.uber.org/fx"
 )
 
 type Gateway struct {
-	fx.Out
-	apodStorage storage.ApodStorage
+	storage.ApodStorage
+	s3storage.S3Storage
 }
 
-func SetupGateway(pc postgresclient.PostgresClient) Gateway {
+func SetupGateway(pc postgresclient.PostgresClient, mc *minioclient.MinioClient) Gateway {
 	return Gateway{
-		apodStorage: storage.ApodStorageImpl{Pc: pc},
+		ApodStorage: pc,
+		S3Storage:   mc,
 	}
 }

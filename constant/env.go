@@ -1,4 +1,4 @@
-package env
+package constant
 
 type Env string
 

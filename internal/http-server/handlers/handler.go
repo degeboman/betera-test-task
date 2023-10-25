@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/degeboman/betera-test-task/constant"
 	mwLogger "github.com/degeboman/betera-test-task/internal/http-server/middleware/logger"
 	"github.com/degeboman/betera-test-task/internal/logger/sl"
 	"github.com/degeboman/betera-test-task/internal/models"
-	s3storage "github.com/degeboman/betera-test-task/internal/s3-storage"
-	minio_client "github.com/degeboman/betera-test-task/internal/s3-storage/minio-client"
-	"github.com/degeboman/betera-test-task/internal/storage"
+	"github.com/degeboman/betera-test-task/internal/usecase"
 	"github.com/degeboman/betera-test-task/pkg/lib/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -18,16 +17,14 @@ import (
 )
 
 type Handler struct {
-	log *slog.Logger
-	storage.ApodStorage
-	s3storage.S3Storage
+	log         *slog.Logger
+	apodUsecase usecase.ApodUsecase
 }
 
-func New(logger *slog.Logger, as storage.ApodStorageImpl, s3Storage *minio_client.MinioClient) Handler {
+func New(logger *slog.Logger, usecase usecase.Usecase) Handler {
 	return Handler{
 		logger,
-		as,
-		s3Storage,
+		usecase.ApodUsecase,
 	}
 }
 
@@ -41,12 +38,9 @@ func (h Handler) SetupRouter(log *slog.Logger) *chi.Mux {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	// TODO сделать get переменную которая отвечает в hd ли качестве можно получить картинку
-	// по умолчанию не в hd
-
-	router.Route("/apod", func(r chi.Router) {
-		r.Get("/all", h.All())
-		r.Get("/{date}", h.ByDate())
+	router.Route(constant.RouteApod, func(r chi.Router) {
+		r.Get(constant.RouteAll, h.All())
+		r.Get(constant.RouteByDate, h.ByDate())
 	})
 
 	return router
@@ -64,7 +58,7 @@ func (h Handler) All() http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		_, err := h.ApodStorage.All()
+		_, err := h.apodUsecase.All()
 
 		if err != nil {
 			log.Error("failed to get all apod", sl.Err(err))
@@ -97,7 +91,7 @@ func (h Handler) ByDate() http.HandlerFunc {
 			return
 		}
 
-		apod, err := h.ApodStorage.ByDate(date)
+		apod, err := h.apodUsecase.GetByDate(date)
 		if err != nil {
 			log.Error("failed to get apod by date", sl.Err(err))
 
@@ -106,20 +100,11 @@ func (h Handler) ByDate() http.HandlerFunc {
 			return
 		}
 
-		//imageUnit, err := h.S3Storage.DownloadFile(context.TODO(), apod.ImageName)
-		//if err != nil {
-		//	log.Error("failed to get image file by date", sl.Err(err))
-		//
-		//	render.JSON(w, r, api.Error("failed to sign up"+sl.Err(err).String()))
-		//
-		//	return
-		//}
-
 		render.HTML(w, r, getHtmlResponse(apod))
 	}
 }
 
-func getHtmlResponse(apod models.ApodGorm) string {
+func getHtmlResponse(apod models.ApodCore) string {
 	return "<html> " +
 		fmt.Sprintf("<h1>%s</h1>", apod.Title) +
 		fmt.Sprintf("<h3>%s</h3>", apod.Date) +

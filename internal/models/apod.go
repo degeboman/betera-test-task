@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type ApodResponse struct {
+type ApodCore struct {
 	Date           string `json:"date"`
 	Explanation    string `json:"explanation"`
 	HDUrl          string `json:"hdurl"`
@@ -13,6 +13,8 @@ type ApodResponse struct {
 	ServiceVersion string `json:"service_version"`
 	Title          string `json:"title"`
 	Url            string `json:"url"`
+	ImageName      string
+	HDImageName    string
 }
 
 type ApodGorm struct {
@@ -31,12 +33,26 @@ type ApodGorm struct {
 	HDImageName    string `gorm:"not null"`
 }
 
-func (ag *ApodGorm) FromResponse(ar *ApodResponse) {
-	ag.Date = ar.Date
-	ag.Explanation = ar.Explanation
-	ag.HDUrl = ar.HDUrl
-	ag.MediaType = ar.MediaType
-	ag.ServiceVersion = ar.ServiceVersion
-	ag.Title = ar.Title
-	ag.Url = ar.Url
+func (ag *ApodGorm) ToCore() ApodCore {
+	return ApodCore{
+		Date:           ag.Date,
+		Explanation:    ag.Explanation,
+		HDUrl:          ag.HDUrl,
+		MediaType:      ag.MediaType,
+		ServiceVersion: ag.ServiceVersion,
+		Title:          ag.Title,
+		Url:            ag.Url,
+		ImageName:      ag.ImageName,
+		HDImageName:    ag.HDImageName,
+	}
+}
+
+func (ag *ApodGorm) FromCore(ac *ApodCore) {
+	ag.Date = ac.Date
+	ag.Explanation = ac.Explanation
+	ag.HDUrl = ac.HDUrl
+	ag.MediaType = ac.MediaType
+	ag.ServiceVersion = ac.ServiceVersion
+	ag.Title = ac.Title
+	ag.Url = ac.Url
 }
