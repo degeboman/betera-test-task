@@ -1,15 +1,15 @@
 package main
 
 import (
-	apodclient "github.com/degeboman/betera-test-task/internal/apod-client"
 	apodworker "github.com/degeboman/betera-test-task/internal/apod-worker"
 	"github.com/degeboman/betera-test-task/internal/config"
+	"github.com/degeboman/betera-test-task/internal/gateway"
 	httpserver "github.com/degeboman/betera-test-task/internal/http-server"
 	"github.com/degeboman/betera-test-task/internal/http-server/handlers"
 	"github.com/degeboman/betera-test-task/internal/logger"
 	minioclient "github.com/degeboman/betera-test-task/internal/s3-storage/minio-client"
-	"github.com/degeboman/betera-test-task/internal/storage"
 	postgresclient "github.com/degeboman/betera-test-task/internal/storage/postgres-client"
+	"github.com/degeboman/betera-test-task/internal/usecase"
 	"go.uber.org/fx"
 )
 
@@ -29,8 +29,8 @@ func invokeWith(options ...fx.Option) *fx.App {
 		fx.Provide(logger.SetupLogger),
 		fx.Provide(postgresclient.MustLoad),
 		fx.Provide(minioclient.MustLoad),
-		fx.Provide(apodclient.New),
-		fx.Provide(storage.New),
+		fx.Provide(gateway.SetupGateway),
+		fx.Provide(usecase.SetupUsecase),
 		fx.Provide(func() chan bool { return make(chan bool) }),
 		fx.Provide(apodworker.New),
 		fx.Provide(handlers.New),
