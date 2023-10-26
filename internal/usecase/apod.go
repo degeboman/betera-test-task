@@ -26,12 +26,14 @@ type ApodUsecaseImpl struct {
 func (a ApodUsecaseImpl) UploadByDate(date string) (models.ApodCore, error) {
 	const op = "usecase.apod.UploadByDate"
 
+	// upload model from apod api
 	response, err := http.Get(apodByDateUrl(a.cfg.NasaApiKey, date))
 	if err != nil {
 		return models.ApodCore{}, fmt.Errorf("%s: %w", op, err)
 	}
 	defer response.Body.Close()
 
+	// reading response body and unmarshal
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return models.ApodCore{}, fmt.Errorf("%s: %w", op, err)

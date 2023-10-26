@@ -5,6 +5,7 @@ import (
 	"github.com/degeboman/betera-test-task/internal/gateway"
 )
 
+// Usecase is business logic layer
 type Usecase struct {
 	ApodUsecase
 	ImageUsecase

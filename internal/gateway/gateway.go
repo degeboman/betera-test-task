@@ -7,6 +7,7 @@ import (
 	postgresclient "github.com/degeboman/betera-test-task/internal/storage/postgres-client"
 )
 
+// Gateway is layer that includes all operations performed by the application on the database layer
 type Gateway struct {
 	storage.ApodStorage
 	s3storage.S3Storage

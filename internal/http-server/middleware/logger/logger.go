@@ -8,6 +8,7 @@ import (
 )
 
 func New(log *slog.Logger) func(next http.Handler) http.Handler {
+	// middleware for logging request and response info
 	return func(next http.Handler) http.Handler {
 		log := log.With(
 			slog.String("component", "middleware/logger"),

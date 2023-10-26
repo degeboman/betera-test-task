@@ -31,7 +31,7 @@ func invokeWith(options ...fx.Option) *fx.App {
 		fx.Provide(minioclient.MustLoad),
 		fx.Provide(gateway.SetupGateway),
 		fx.Provide(usecase.SetupUsecase),
-		fx.Provide(func() chan bool { return make(chan bool) }),
+		fx.Provide(func() chan bool { return make(chan bool) }), // chan for stopping worker
 		fx.Provide(apodworker.New),
 		fx.Provide(handlers.New),
 	}

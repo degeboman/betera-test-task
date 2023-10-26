@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// ApodCore is implementation independent
 type ApodCore struct {
 	Date           string `json:"date"`
 	Explanation    string `json:"explanation"`
@@ -17,6 +18,7 @@ type ApodCore struct {
 	HDImageName    string
 }
 
+// ApodGorm is special model for gorm
 type ApodGorm struct {
 	ID             uint `gorm:"primaryKey"`
 	CreatedAt      time.Time
@@ -32,6 +34,8 @@ type ApodGorm struct {
 	ImageName      string `gorm:"not null"`
 	HDImageName    string `gorm:"not null"`
 }
+
+// models mapping
 
 func (ag *ApodGorm) ToCore() ApodCore {
 	return ApodCore{

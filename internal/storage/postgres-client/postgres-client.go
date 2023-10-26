@@ -19,7 +19,6 @@ type PostgresClient struct {
 }
 
 func MustLoad(cfg config.Config) PostgresClient {
-
 	db, err := gorm.Open(
 		postgres.Open(cfg.PostgresDsn),
 		&gorm.Config{Logger: gormLogger.New(

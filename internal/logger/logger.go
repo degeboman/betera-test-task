@@ -31,6 +31,7 @@ func SetupLogger(cfg config.Config) *slog.Logger {
 	return log
 }
 
+// just pretty logger
 func setupPrettySlog() *slog.Logger {
 	opts := slogpretty.PrettyHandlerOptions{
 		SlogOpts: &slog.HandlerOptions{

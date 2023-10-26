@@ -34,7 +34,7 @@ func (aw ApodWorker) Ticker(stop chan bool) {
 	if err != nil {
 		if err.Error() == constant.ErrRecordNotFound {
 			// today record not found
-			aw.getApodAndSave(nowInApodFormat())
+			aw.uploadApodAndSave(nowInApodFormat())
 		} else {
 			log.Error("failed to get apod meta by date", sl.Err(err))
 		}
@@ -45,7 +45,7 @@ func (aw ApodWorker) Ticker(stop chan bool) {
 	for {
 		select {
 		case <-ticker.C:
-			aw.getApodAndSave(nowInApodFormat())
+			aw.uploadApodAndSave(nowInApodFormat())
 		case <-stop:
 			log.Info("stopping apod ticker")
 		}
@@ -63,7 +63,7 @@ func New(logger *slog.Logger, usecase usecase.Usecase) ApodWorker {
 	}
 }
 
-func (aw ApodWorker) getApodAndSave(date string) {
+func (aw ApodWorker) uploadApodAndSave(date string) {
 	const op = "apod-worker.apod-worker.getApodAndSave"
 
 	log := aw.Logger.With(
