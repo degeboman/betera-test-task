@@ -28,10 +28,10 @@ type minioAuthData struct {
 func MustLoad(cfg config.Config) *MinioClient {
 	mc := &MinioClient{
 		minioAuthData: minioAuthData{
-			password: cfg.MinioAuthData.Password,
-			url:      cfg.MinioAuthData.Url,
-			user:     cfg.MinioAuthData.User,
-			ssl:      cfg.MinioAuthData.Ssl,
+			password: cfg.MinioPassword,
+			url:      cfg.MinioUrl,
+			user:     cfg.MinioUser,
+			ssl:      cfg.MinioSsl,
 		},
 	}
 
@@ -44,6 +44,17 @@ func MustLoad(cfg config.Config) *MinioClient {
 			Secure: mc.ssl,
 		},
 	)
+
+	isExist, err := mc.Client.BucketExists(context.TODO(), constant.BucketName)
+	if err != nil {
+		log.Fatalf("failed to check for bucket existense: %s", err.Error())
+	}
+
+	if !isExist {
+		if err := mc.Client.MakeBucket(context.TODO(), constant.BucketName, minio.MakeBucketOptions{}); err != nil {
+			log.Fatalf("failed to connect minio client: %s", err.Error())
+		}
+	}
 
 	if err != nil {
 		log.Fatalf("failed to connect minio client: %s", err.Error())
@@ -80,7 +91,9 @@ func (m *MinioClient) ByName(ctx context.Context, objectName string) (models.Ima
 		ctx,
 		constant.BucketName,
 		objectName,
-		minio.GetObjectOptions{},
+		minio.GetObjectOptions{
+			Checksum: true,
+		},
 	)
 	defer reader.Close()
 

@@ -81,7 +81,7 @@ func (a ApodAllUseCaseImpl) Apply() ([]models.ApodCore, error) {
 		return []models.ApodCore{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	apodsCore := make([]models.ApodCore, len(apodsGorm))
+	apodsCore := make([]models.ApodCore, 0, len(apodsGorm))
 
 	for _, apodGorm := range apodsGorm {
 		apodsCore = append(apodsCore, mapping.ApodGormToCore(apodGorm))

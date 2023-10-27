@@ -28,11 +28,11 @@ func New(
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	srv := &http.Server{
-		Addr:         cfg.Address,
+		Addr:         cfg.HttpServerAddress,
 		Handler:      router,
-		ReadTimeout:  cfg.HTTPServer.Timeout,
-		WriteTimeout: cfg.HTTPServer.Timeout,
-		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+		ReadTimeout:  cfg.HttpServerTimeout,
+		WriteTimeout: cfg.HttpServerTimeout,
+		IdleTimeout:  cfg.HttpServerIdleTimeout,
 	}
 
 	lifecycle.Append(

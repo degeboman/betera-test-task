@@ -1,8 +1,9 @@
-package by_date
+package by_date_html
 
 import (
+	"fmt"
 	"github.com/degeboman/betera-test-task/internal/logger/sl"
-	"github.com/degeboman/betera-test-task/internal/models/mapping"
+	"github.com/degeboman/betera-test-task/internal/models"
 	"github.com/degeboman/betera-test-task/internal/usecase"
 	"github.com/degeboman/betera-test-task/pkg/lib/api"
 	"github.com/go-chi/chi/v5"
@@ -41,10 +42,17 @@ func New(log *slog.Logger, useCase usecase.ApodGetByDateUseCase) http.HandlerFun
 			return
 		}
 
-		apodWeb := mapping.ApodCoreToWeb(apod)
-
-		render.JSON(w, r, apodWeb)
+		render.HTML(w, r, getHtmlResponse(apod))
 	}
+}
+
+func getHtmlResponse(apod models.ApodCore) string {
+	return "<html> " +
+		fmt.Sprintf("<h1>%s</h1>", apod.Title) +
+		fmt.Sprintf("<h3>%s</h3>", apod.Date) +
+		fmt.Sprintf("<img src=\"%s\" alt=\"%s\"/>", apod.Url, apod.Title) +
+		fmt.Sprintf("<p>%s</p>", apod.Explanation) +
+		" </html>"
 }
 
 func validateApodDate(date string) bool {

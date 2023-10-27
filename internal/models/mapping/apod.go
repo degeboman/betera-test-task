@@ -27,6 +27,8 @@ func ApodCoreToGorm(apodCore models.ApodCore) models.ApodGorm {
 		ServiceVersion: apodCore.ServiceVersion,
 		Title:          apodCore.Title,
 		Url:            apodCore.Url,
+		ImageName:      apodCore.ImageName,
+		HDImageName:    apodCore.HDImageName,
 	}
 }
 

@@ -2,73 +2,51 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/degeboman/betera-test-task/constant"
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"time"
 )
 
 type Config struct {
-	PostgresDsn string
-	NasaApiKey  string `yaml:"nasa_api_key" env-required:"true"`
-	Env         string `yaml:"env" env-default:"local"`
+	PostgresDsn string `env:"POSTGRES_DSN" env-required:"true"`
+	NasaApiKey  string `env:"NASA_API_KEY" env-required:"true"`
+	Env         string `env:"ENV" env-default:"local"`
 
-	HTTPServer    `yaml:"http_server"`
-	MinioAuthData `yaml:"minio_auth_data"`
+	HttpServerAddress     string        `env:"HTTP_SERVER_ADDRESS" env-default:"localhost:1010"`
+	HttpServerTimeout     time.Duration `env:"HTTP_SERVER_TIMEOUT" env-default:"4s"`
+	HttpServerIdleTimeout time.Duration `env:"HTTP_SERVER_IDLE_TIMEOUT" env-default:"60s"`
+
+	MinioUrl      string `env:"MINIO_URL"`
+	MinioUser     string `env:"MINIO_ROOT_USER" env-default:"minio"`
+	MinioPassword string `env:"MINIO_ROOT_PASSWORD" env-required:"true"`
+	MinioSsl      bool   `env:"ssl" env-default:"false"`
 }
-
-type HTTPServer struct {
-	Address     string        `yaml:"address" env-default:"localhost:1010"`
-	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
-	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
-}
-
-type MinioAuthData struct {
-	Url      string `yaml:"url"`
-	User     string `yaml:"user" env-default:"minio"`
-	Password string `yaml:"password" env-required:"true"`
-	Ssl      bool   `yaml:"ssl" env-default:"false"`
-}
-
-//type Database struct {
-//	Port     string `env:"POSTGRES_PORT" env-default:"4444"`
-//	Host     string `env:"HOST" env-default:"localhost"`
-//	Name     string `env:"POSTGRES_DBNAME" env-default:"apod_db"`
-//	User     string `env:"POSTGRES_USER" env-default:"apod"`
-//	Password string `env:"POSTGRES_PASSWORD" env-required:"true"`
-//}
 
 func MustLoad() Config {
-	configPath := flag.String(
-		constant.ConfigPathFlag,
-		"../../config/local.yml",
-		constant.ConfigPathFlagUsage,
+	envPath := flag.String(
+		constant.EnvPathFlag,
+		"../../.env",
+		constant.EnvPathFlagUsage,
 	)
 
 	// check if file exists
-	if _, err := os.Stat(*configPath); os.IsNotExist(err) {
-		log.Fatalf("config file does not exist: %s", *configPath)
+	if _, err := os.Stat(*envPath); os.IsNotExist(err) {
+		log.Fatalf("env file does not exist: %s", *envPath)
 	}
 
-	postgresDsnString := flag.String(
-		constant.PostgrestDsnFlag,
-		"",
-		constant.PostgresDsnFlaUsage,
-	)
-
-	flag.Parse()
-
-	if *postgresDsnString == "" {
-		log.Fatal("postgres dsn string is not specified")
+	// loading env variables
+	if err := godotenv.Load(*envPath); err != nil {
+		log.Fatalf("failed to load env file: %s", *envPath)
 	}
 
 	var cfg Config
 
-	cfg.PostgresDsn = *postgresDsnString
-
-	if err := cleanenv.ReadConfig(*configPath, &cfg); err != nil {
-		log.Fatalf("cannot read config: %s", err)
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		fmt.Println(err)
 	}
 
 	return cfg

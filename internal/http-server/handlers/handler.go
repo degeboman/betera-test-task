@@ -4,6 +4,7 @@ import (
 	"github.com/degeboman/betera-test-task/constant"
 	"github.com/degeboman/betera-test-task/internal/http-server/handlers/all"
 	bydate "github.com/degeboman/betera-test-task/internal/http-server/handlers/by-date"
+	bydatehtml "github.com/degeboman/betera-test-task/internal/http-server/handlers/by-date-html"
 	mwlogger "github.com/degeboman/betera-test-task/internal/http-server/middleware/logger"
 	"github.com/degeboman/betera-test-task/internal/usecase"
 	"github.com/go-chi/chi/v5"
@@ -27,6 +28,7 @@ func SetupRouter(log *slog.Logger,
 	router.Route(constant.RouteApod, func(r chi.Router) {
 		r.Get(constant.RouteAll, all.New(log, apodAllUseCase))
 		r.Get(constant.RouteByDate, bydate.New(log, apodGetByDateUseCase))
+		r.Get(constant.RouteByDateHtml, bydatehtml.New(log, apodGetByDateUseCase))
 	})
 
 	return router
