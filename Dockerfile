@@ -7,8 +7,8 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN go build -o /cmd/betera-test-task
+RUN go build ./cmd/betera-test-task .
 
 EXPOSE 8000
 
-CMD [ "/betera-test-task" ]
+CMD [ "/" ]
