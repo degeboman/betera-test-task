@@ -30,10 +30,16 @@ func invokeWith(options ...fx.Option) *fx.App {
 		fx.Provide(postgresclient.MustLoad),
 		fx.Provide(minioclient.MustLoad),
 		fx.Provide(gateway.SetupGateway),
-		fx.Provide(usecase.SetupUsecase),
+		fx.Provide(usecase.NewApodGetByDateUseCaseImpl),
+		fx.Provide(usecase.NewApodCreateUseCaseImpl),
+		fx.Provide(usecase.NewApodUploadByDateUseCaseImpl),
+		fx.Provide(usecase.NewApodAllUseCaseImpl),
+		fx.Provide(usecase.NewImageSaveUseCaseImpl),
+		fx.Provide(usecase.NewImageByNameUseCaseImpl),
+		fx.Provide(usecase.NewImageDownloadFromUrlUseCaseImpl),
+		fx.Provide(handlers.SetupRouter),
 		fx.Provide(func() chan bool { return make(chan bool) }), // chan for stopping worker
 		fx.Provide(apodworker.New),
-		fx.Provide(handlers.New),
 	}
 
 	for _, option := range options {

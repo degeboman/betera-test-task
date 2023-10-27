@@ -6,6 +6,6 @@ import (
 )
 
 type S3Storage interface {
-	UploadImage(context.Context, models.ImageUnit) (string, error)
-	DownloadImage(context.Context, string) (models.ImageUnit, error)
+	Save(context.Context, models.ImageUnitCore) (string, error)
+	ByName(context.Context, string) (models.ImageUnitCore, error)
 }

@@ -3,19 +3,18 @@ package apod_worker
 import (
 	"github.com/degeboman/betera-test-task/constant"
 	"github.com/degeboman/betera-test-task/internal/logger/sl"
-	"github.com/degeboman/betera-test-task/internal/storage"
 	"github.com/degeboman/betera-test-task/internal/usecase"
 	"log/slog"
 	"time"
 )
 
-type ApodStorageProvider interface {
-	storage.ApodStorage
-}
-
 type ApodWorker struct {
 	*slog.Logger
-	usecase.Usecase
+	usecase.ApodGetByDateUseCase
+	usecase.ApodUploadByDateUseCase
+	usecase.ImageDownloadFromUrlUseCase
+	usecase.ImageSaveUseCase
+	usecase.ApodCreateUseCase
 }
 
 func (aw ApodWorker) Ticker(stop chan bool) {
@@ -30,7 +29,7 @@ func (aw ApodWorker) Ticker(stop chan bool) {
 	now := nowInApodFormat()
 
 	// checking that there is today's apod recording
-	_, err := aw.ApodUsecase.GetByDate(now)
+	_, err := aw.ApodGetByDateUseCase.Apply(now)
 	if err != nil {
 		if err.Error() == constant.ErrRecordNotFound {
 			// today record not found
@@ -52,17 +51,25 @@ func (aw ApodWorker) Ticker(stop chan bool) {
 	}
 }
 
-func nowInApodFormat() string {
-	return time.Now().Format("2006-01-02")
-}
-
-func New(logger *slog.Logger, usecase usecase.Usecase) ApodWorker {
+func New(
+	logger *slog.Logger,
+	apodGetByDateUseCase *usecase.ApodGetByDateUseCaseImpl,
+	apodUploadByDateUseCase *usecase.ApodUploadByDateUseCaseImpl,
+	imageDownloadFromUrlUseCase *usecase.ImageDownloadFromUrlUseCaseImpl,
+	imageSaveUseCase *usecase.ImageSaveUseCaseImpl,
+	apodCreateUseCase *usecase.ApodCreateUseCaseImpl,
+) ApodWorker {
 	return ApodWorker{
-		Logger:  logger,
-		Usecase: usecase,
+		Logger:                      logger,
+		ApodGetByDateUseCase:        apodGetByDateUseCase,
+		ApodUploadByDateUseCase:     apodUploadByDateUseCase,
+		ImageDownloadFromUrlUseCase: imageDownloadFromUrlUseCase,
+		ImageSaveUseCase:            imageSaveUseCase,
+		ApodCreateUseCase:           apodCreateUseCase,
 	}
 }
 
+// TODO make delegate
 func (aw ApodWorker) uploadApodAndSave(date string) {
 	const op = "apod-worker.apod-worker.getApodAndSave"
 
@@ -71,7 +78,7 @@ func (aw ApodWorker) uploadApodAndSave(date string) {
 	)
 
 	// get apod meta by date
-	apodCore, err := aw.ApodUsecase.UploadByDate(date)
+	apodCore, err := aw.ApodUploadByDateUseCase.Apply(date)
 	if err != nil {
 		log.Error("failed to get apod meta", sl.Err(err))
 	}
@@ -83,28 +90,28 @@ func (aw ApodWorker) uploadApodAndSave(date string) {
 
 	// download image by url and save in s3 storage
 
-	imageUnit, err := aw.ImageUsecase.DownloadFromUrl(apodCore.Url)
+	imageUnit, err := aw.ImageDownloadFromUrlUseCase.Apply(apodCore.Url)
 	if err != nil {
 		log.Error("failed to download apod image", sl.Err(err))
 
 		return
 	}
 
-	imageName, err := aw.ImageUsecase.SaveImage(imageUnit)
+	imageName, err := aw.ImageSaveUseCase.Apply(imageUnit)
 	if err != nil {
 		log.Error("failed to save apod image", sl.Err(err))
 
 		return
 	}
 
-	imageHdUnit, err := aw.ImageUsecase.DownloadFromUrl(apodCore.HDUrl)
+	imageHdUnit, err := aw.ImageDownloadFromUrlUseCase.Apply(apodCore.HDUrl)
 	if err != nil {
 		log.Error("failed to download apod image", sl.Err(err))
 
 		return
 	}
 
-	hdImageName, err := aw.ImageUsecase.SaveImage(imageHdUnit)
+	hdImageName, err := aw.ImageSaveUseCase.Apply(imageHdUnit)
 	if err != nil {
 		log.Error("failed to save apod image", sl.Err(err))
 
@@ -115,7 +122,11 @@ func (aw ApodWorker) uploadApodAndSave(date string) {
 	apodCore.HDImageName = hdImageName
 
 	//save apod model in db
-	if err := aw.ApodUsecase.Create(apodCore); err != nil {
+	if err := aw.ApodCreateUseCase.Apply(apodCore); err != nil {
 		log.Error("failed to create apod model", sl.Err(err))
 	}
+}
+
+func nowInApodFormat() string {
+	return time.Now().Format("2006-01-02")
 }

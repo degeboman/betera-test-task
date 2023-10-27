@@ -28,10 +28,10 @@ type minioAuthData struct {
 func MustLoad(cfg config.Config) *MinioClient {
 	mc := &MinioClient{
 		minioAuthData: minioAuthData{
-			password: cfg.MinioAuthData.Password,
-			url:      cfg.MinioAuthData.Url,
-			user:     cfg.MinioAuthData.User,
-			ssl:      cfg.MinioAuthData.Ssl,
+			password: cfg.MinioPassword,
+			url:      cfg.MinioUrl,
+			user:     cfg.MinioUser,
+			ssl:      cfg.MinioSsl,
 		},
 	}
 
@@ -45,6 +45,17 @@ func MustLoad(cfg config.Config) *MinioClient {
 		},
 	)
 
+	isExist, err := mc.Client.BucketExists(context.TODO(), constant.BucketName)
+	if err != nil {
+		log.Fatalf("failed to check for bucket existense: %s", err.Error())
+	}
+
+	if !isExist {
+		if err := mc.Client.MakeBucket(context.TODO(), constant.BucketName, minio.MakeBucketOptions{}); err != nil {
+			log.Fatalf("failed to connect minio client: %s", err.Error())
+		}
+	}
+
 	if err != nil {
 		log.Fatalf("failed to connect minio client: %s", err.Error())
 	}
@@ -52,7 +63,7 @@ func MustLoad(cfg config.Config) *MinioClient {
 	return mc
 }
 
-func (m *MinioClient) UploadImage(ctx context.Context, object models.ImageUnit) (string, error) {
+func (m *MinioClient) Save(ctx context.Context, object models.ImageUnitCore) (string, error) {
 	const op = "s3-storage.minio-client.minio-client.UploadFile"
 
 	imageName := generateObjectName()
@@ -73,22 +84,24 @@ func (m *MinioClient) UploadImage(ctx context.Context, object models.ImageUnit) 
 	return imageName, err
 }
 
-func (m *MinioClient) DownloadImage(ctx context.Context, objectName string) (models.ImageUnit, error) {
+func (m *MinioClient) ByName(ctx context.Context, objectName string) (models.ImageUnitCore, error) {
 	const op = "s3-storage.minio-client.minio-client.DownloadFile"
 
 	reader, err := m.Client.GetObject(
 		ctx,
 		constant.BucketName,
 		objectName,
-		minio.GetObjectOptions{},
+		minio.GetObjectOptions{
+			Checksum: true,
+		},
 	)
 	defer reader.Close()
 
 	if err != nil {
-		return models.ImageUnit{}, fmt.Errorf("%s: %w", op, err)
+		return models.ImageUnitCore{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return models.ImageUnit{
+	return models.ImageUnitCore{
 		Payload: reader,
 	}, nil
 }
