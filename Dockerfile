@@ -7,8 +7,8 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN go build -o /go-docker-demo
+RUN go build -o /cmd/betera-test-task
 
 EXPOSE 8000
 
-CMD [ "/go-docker-demo" ]
+CMD [ "/betera-test-task" ]
