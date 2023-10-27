@@ -4,8 +4,9 @@
 
 ### routes
 
-- get apod/all - all records
-- get apod/{date} - by date (date in format "2023-10-25")
+- GET apod/all - all records
+- GET apod/{date} - by date (date in format "2023-10-25")
+- GET apod/html/{date}
 
 ### default ports
 

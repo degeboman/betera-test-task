@@ -1,14 +1,16 @@
 FROM golang:1.21.1
 
-WORKDIR /app
+WORKDIR /build
 
 COPY go.mod ./
 RUN go mod download
 
-COPY *.go ./
+COPY . .
 
-RUN go build -o /go-docker-demo
+RUN go build -o app cmd/betera-test-task/main.go
+
+RUN chmod +x app
 
 EXPOSE 8000
 
-CMD [ "/go-docker-demo" ]
+CMD [ "./app" ]

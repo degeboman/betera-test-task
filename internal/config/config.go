@@ -29,7 +29,7 @@ type Config struct {
 func MustLoad() Config {
 	envPath := flag.String(
 		constant.EnvPathFlag,
-		"../../.env",
+		".env",
 		constant.EnvPathFlagUsage,
 	)
 
