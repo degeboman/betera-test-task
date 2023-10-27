@@ -3,7 +3,7 @@ services:
   rest-backend:
     container_name: apod-rest-backend
     build:
-      context: backend
+      context: .
       dockerfile: Dockerfile
     network_mode: host
     volumes:
