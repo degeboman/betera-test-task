@@ -40,14 +40,14 @@ func MustLoad(cfg config.Config) PostgresClient {
 		Db: db,
 	}
 
-	if err := pc.Migrate(); err != nil {
+	if err := pc.migrate(); err != nil {
 		log.Fatalf("failed to migrate: %s", err.Error())
 	}
 
 	return pc
 }
 
-func (p PostgresClient) Migrate() error {
+func (p PostgresClient) migrate() error {
 	return p.Db.AutoMigrate(
 		&models.ApodGorm{},
 	)

@@ -5,25 +5,92 @@ import (
 	"fmt"
 	"github.com/degeboman/betera-test-task/constant"
 	"github.com/degeboman/betera-test-task/internal/config"
+	"github.com/degeboman/betera-test-task/internal/gateway"
 	"github.com/degeboman/betera-test-task/internal/models"
+	"github.com/degeboman/betera-test-task/internal/models/mapping"
 	"github.com/degeboman/betera-test-task/internal/storage"
 	"io"
 	"net/http"
 )
 
-type ApodUsecase interface {
-	All() ([]models.ApodCore, error)
-	UploadByDate(date string) (models.ApodCore, error)
-	GetByDate(date string) (models.ApodCore, error)
-	Create(apod models.ApodCore) error
+type apodGetterByDate interface {
+	ByDate(date string) (models.ApodGorm, error)
 }
 
-type ApodUsecaseImpl struct {
+type apodCreator interface {
+	Create(gorm models.ApodGorm) error
+}
+
+type apodGetterAll interface {
+	All() ([]models.ApodGorm, error)
+}
+
+type ApodCreateUseCase interface {
+	Apply(apod models.ApodCore) error
+}
+
+type ApodGetByDateUseCase interface {
+	Apply(date string) (models.ApodCore, error)
+}
+
+type ApodUploadByDateUseCase interface {
+	Apply(date string) (models.ApodCore, error)
+}
+
+type ApodAllUseCase interface {
+	Apply() ([]models.ApodCore, error)
+}
+
+type ApodGetByDateUseCaseImpl struct {
+	apodGetterByDate
+}
+
+func NewApodGetByDateUseCaseImpl(apodGetterByDate gateway.Gateway) *ApodGetByDateUseCaseImpl {
+	return &ApodGetByDateUseCaseImpl{apodGetterByDate: apodGetterByDate}
+}
+
+type ApodCreateUseCaseImpl struct {
+	apodCreator
+}
+
+func NewApodCreateUseCaseImpl(apodCreator gateway.Gateway) *ApodCreateUseCaseImpl {
+	return &ApodCreateUseCaseImpl{apodCreator: apodCreator}
+}
+
+type ApodUploadByDateUseCaseImpl struct {
 	cfg config.Config
-	storage.ApodStorage
 }
 
-func (a ApodUsecaseImpl) UploadByDate(date string) (models.ApodCore, error) {
+func NewApodUploadByDateUseCaseImpl(cfg config.Config) *ApodUploadByDateUseCaseImpl {
+	return &ApodUploadByDateUseCaseImpl{cfg: cfg}
+}
+
+type ApodAllUseCaseImpl struct {
+	apodGetterAll
+}
+
+func NewApodAllUseCaseImpl(apodGetterAll gateway.Gateway) *ApodAllUseCaseImpl {
+	return &ApodAllUseCaseImpl{apodGetterAll: apodGetterAll}
+}
+
+func (a ApodAllUseCaseImpl) Apply() ([]models.ApodCore, error) {
+	const op = "usecase.apod.All"
+
+	apodsGorm, err := a.apodGetterAll.All()
+	if err != nil {
+		return []models.ApodCore{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	apodsCore := make([]models.ApodCore, len(apodsGorm))
+
+	for _, apodGorm := range apodsGorm {
+		apodsCore = append(apodsCore, mapping.ApodGormToCore(apodGorm))
+	}
+
+	return apodsCore, nil
+}
+
+func (a ApodUploadByDateUseCaseImpl) Apply(date string) (models.ApodCore, error) {
 	const op = "usecase.apod.UploadByDate"
 
 	// upload model from apod api
@@ -39,47 +106,39 @@ func (a ApodUsecaseImpl) UploadByDate(date string) (models.ApodCore, error) {
 		return models.ApodCore{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var ar models.ApodCore
+	var aw models.ApodWeb
 
-	if err := json.Unmarshal(body, &ar); err != nil {
+	if err := json.Unmarshal(body, &aw); err != nil {
 		return models.ApodCore{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return ar, nil
+	apodCore := mapping.ApodWebToCore(aw)
+
+	return apodCore, nil
 }
 
-func (a ApodUsecaseImpl) Create(apod models.ApodCore) error {
-	var apodGorm models.ApodGorm
-	apodGorm.FromCore(&apod)
+func (a ApodGetByDateUseCaseImpl) Apply(date string) (models.ApodCore, error) {
 
-	return a.ApodStorage.Create(apodGorm)
-}
-
-func (a ApodUsecaseImpl) All() ([]models.ApodCore, error) {
-	const op = "usecase.apod.All"
-
-	apods, err := a.ApodStorage.All()
-	if err != nil {
-		return []models.ApodCore{}, fmt.Errorf("%s: %w", op, err)
-	}
-
-	apodsCore := make([]models.ApodCore, len(apods))
-
-	for _, apod := range apods {
-		apodTemp := apod.ToCore()
-		apodsCore = append(apodsCore, apodTemp)
-	}
-
-	return apodsCore, nil
-}
-
-func (a ApodUsecaseImpl) GetByDate(date string) (models.ApodCore, error) {
-	apod, err := a.ApodStorage.ByDate(date)
+	apodGorm, err := a.apodGetterByDate.ByDate(date)
 	if err != nil {
 		return models.ApodCore{}, err
 	}
 
-	return apod.ToCore(), nil
+	apodCore := mapping.ApodGormToCore(apodGorm)
+
+	return apodCore, nil
+}
+
+func (a ApodCreateUseCaseImpl) Apply(apod models.ApodCore) error {
+
+	apodGorm := mapping.ApodCoreToGorm(apod)
+
+	return a.apodCreator.Create(apodGorm)
+}
+
+type ApodUsecaseImpl struct {
+	cfg config.Config
+	storage.ApodStorage
 }
 
 func apodByDateUrl(apiKey, date string) string {

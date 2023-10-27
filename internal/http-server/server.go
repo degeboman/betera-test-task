@@ -4,8 +4,8 @@ import (
 	"context"
 	apodworker "github.com/degeboman/betera-test-task/internal/apod-worker"
 	"github.com/degeboman/betera-test-task/internal/config"
-	"github.com/degeboman/betera-test-task/internal/http-server/handlers"
 	"github.com/degeboman/betera-test-task/internal/logger/sl"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/fx"
 	"log/slog"
 	"net/http"
@@ -21,13 +21,11 @@ func New(
 	log *slog.Logger,
 	cfg config.Config,
 	worker apodworker.ApodWorker,
-	handler handlers.Handler,
+	router *chi.Mux,
 ) {
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	router := handler.SetupRouter(log)
 
 	srv := &http.Server{
 		Addr:         cfg.Address,

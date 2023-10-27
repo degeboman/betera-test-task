@@ -52,7 +52,7 @@ func MustLoad(cfg config.Config) *MinioClient {
 	return mc
 }
 
-func (m *MinioClient) UploadImage(ctx context.Context, object models.ImageUnit) (string, error) {
+func (m *MinioClient) Save(ctx context.Context, object models.ImageUnitCore) (string, error) {
 	const op = "s3-storage.minio-client.minio-client.UploadFile"
 
 	imageName := generateObjectName()
@@ -73,7 +73,7 @@ func (m *MinioClient) UploadImage(ctx context.Context, object models.ImageUnit) 
 	return imageName, err
 }
 
-func (m *MinioClient) DownloadImage(ctx context.Context, objectName string) (models.ImageUnit, error) {
+func (m *MinioClient) ByName(ctx context.Context, objectName string) (models.ImageUnitCore, error) {
 	const op = "s3-storage.minio-client.minio-client.DownloadFile"
 
 	reader, err := m.Client.GetObject(
@@ -85,10 +85,10 @@ func (m *MinioClient) DownloadImage(ctx context.Context, objectName string) (mod
 	defer reader.Close()
 
 	if err != nil {
-		return models.ImageUnit{}, fmt.Errorf("%s: %w", op, err)
+		return models.ImageUnitCore{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return models.ImageUnit{
+	return models.ImageUnitCore{
 		Payload: reader,
 	}, nil
 }

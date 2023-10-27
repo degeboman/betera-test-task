@@ -2,7 +2,7 @@ package models
 
 import "io"
 
-type ImageUnit struct {
+type ImageUnitCore struct {
 	Payload     io.Reader
 	PayloadName string
 	PayloadSize int64
