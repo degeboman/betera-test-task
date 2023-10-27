@@ -20,7 +20,7 @@ services:
         MINIO_ROOT_PASSWORD: minio123
     command: server --address ${MINIO_DASHBOARD_ADDRESS} --console-address ":${MINIO_PORT}" /data
     ports:
-        -  ${MINIO_URL}:${MINIO_DASHBOARD_PORT}
+        -  ${MINIO_DASHBOARD_IP_ADDRESS}:${MINIO_DASHBOARD_PORT}
         -  ${MINIO_PORT}:${MINIO_PORT}
   backend-postgres:
     container_name: postgres_db_apod
