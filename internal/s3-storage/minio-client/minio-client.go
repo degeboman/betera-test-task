@@ -45,17 +45,17 @@ func MustLoad(cfg config.Config) *MinioClient {
 		},
 	)
 
-	isExist, err := mc.Client.BucketExists(context.TODO(), constant.BucketName)
-	if err != nil {
-		log.Fatalf("failed to check for bucket existense: %s", err.Error())
-	}
+	//isExist, err := mc.Client.BucketExists(context.TODO(), constant.BucketName)
+	//if err != nil {
+	//	log.Fatalf("failed to check for bucket existense: %s", err.Error())
+	//}
 
-	if !isExist {
-		if err := mc.Client.MakeBucket(context.TODO(), constant.BucketName, minio.MakeBucketOptions{}); err != nil {
-			log.Fatalf("failed to connect minio client: %s", err.Error())
-		}
-	}
-
+	//if !isExist {
+	//	if err := mc.Client.MakeBucket(context.TODO(), constant.BucketName, minio.MakeBucketOptions{}); err != nil {
+	//		log.Fatalf("failed to connect minio client: %s", err.Error())
+	//	}
+	//}
+	//
 	if err != nil {
 		log.Fatalf("failed to connect minio client: %s", err.Error())
 	}
@@ -64,7 +64,7 @@ func MustLoad(cfg config.Config) *MinioClient {
 }
 
 func (m *MinioClient) Save(ctx context.Context, object models.ImageUnitCore) (string, error) {
-	const op = "s3-storage.minio-client.minio-client.UploadFile"
+	const op = "s3-storage.minio-client.minio-client.Save"
 
 	imageName := generateObjectName()
 
@@ -85,7 +85,7 @@ func (m *MinioClient) Save(ctx context.Context, object models.ImageUnitCore) (st
 }
 
 func (m *MinioClient) ByName(ctx context.Context, objectName string) (models.ImageUnitCore, error) {
-	const op = "s3-storage.minio-client.minio-client.DownloadFile"
+	const op = "s3-storage.minio-client.minio-client.ByName"
 
 	reader, err := m.Client.GetObject(
 		ctx,

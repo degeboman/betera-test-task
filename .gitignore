@@ -20,5 +20,5 @@
 # Go workspace file
 go.work
 
-minio
-postgres-data
+minio/*
+postgres-data/*

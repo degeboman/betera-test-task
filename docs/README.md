@@ -1,6 +1,6 @@
 # betera-test-task
 
-* !Before starting, insert your Api Key!*
+<b>Before starting, insert your Api Key!</b>
 
 ### routes
 
