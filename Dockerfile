@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download
 
-COPY *.go ./
+COPY . .
 
 RUN go build ./cmd/betera-test-task /app
 
