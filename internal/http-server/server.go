@@ -46,6 +46,8 @@ func New(
 				go func() {
 					if err := srv.ListenAndServe(); err != nil {
 						log.Error("failed to start server", sl.Err(err))
+
+						return
 					}
 				}()
 

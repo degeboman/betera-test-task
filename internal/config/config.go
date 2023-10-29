@@ -33,6 +33,8 @@ func MustLoad() Config {
 		constant.EnvPathFlagUsage,
 	)
 
+	flag.Parse()
+
 	// check if file exists
 	if _, err := os.Stat(*envPath); os.IsNotExist(err) {
 		log.Fatalf("env file does not exist: %s", *envPath)
