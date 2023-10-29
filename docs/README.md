@@ -10,13 +10,9 @@
 
 ### default ports
 
-- 6001: minio dashboard
+- 9001: minio dashboard
 - 6555: postgres container
 - 8000: http server
-
-### architecture
-
-<img src="architecture.png" alt="architecture" style="height: 100px; width:100px;"/>
 
 ### go.mod
 
