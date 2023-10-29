@@ -45,16 +45,16 @@ func MustLoad(cfg config.Config) *MinioClient {
 		},
 	)
 
-	//isExist, err := mc.Client.BucketExists(context.TODO(), constant.BucketName)
-	//if err != nil {
-	//	log.Fatalf("failed to check for bucket existense: %s", err.Error())
-	//}
-	//
-	//if !isExist {
-	//	if err := mc.Client.MakeBucket(context.TODO(), constant.BucketName, minio.MakeBucketOptions{}); err != nil {
-	//		log.Fatalf("failed to connect minio client: %s", err.Error())
-	//	}
-	//}
+	isExist, err := mc.Client.BucketExists(context.TODO(), constant.BucketName)
+	if err != nil {
+		log.Fatalf("failed to check for bucket existense: %s", err.Error())
+	}
+	
+	if !isExist {
+		if err := mc.Client.MakeBucket(context.TODO(), constant.BucketName, minio.MakeBucketOptions{}); err != nil {
+			log.Fatalf("failed to connect minio client: %s", err.Error())
+		}
+	}
 
 	if err != nil {
 		log.Fatalf("failed to connect minio client: %s", err.Error())
